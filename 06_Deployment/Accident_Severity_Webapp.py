@@ -3,7 +3,7 @@
 
 # ## Mapping
 
-# In[1]:
+# In[7]:
 
 
 dict_week = {1:"Sunday",2:"Monday",3:"Tuesday",4:"Wednesday",5:"Thursday",6:"Friday",7:"Saturday"}
@@ -48,35 +48,20 @@ dict_hazards = {0:"None",
 dict_urban_rural = {1:"Urban", 2:"Rural", 3:"Unallocated"}
 
 
-# # Dataset
-
-# In[7]:
-
-
-import pandas as pd
-#import dataset created in Data Understanding
-accidents = pd.read_csv(r"C:\Users\DETCAO03\V-Case study\02_Dataset\Used\Accidents.csv",low_memory=False, encoding='utf-8')
-accidents.drop(['Location_Easting_OSGR', 'Location_Northing_OSGR', 'Accident_Index', 'LSOA_of_Accident_Location', 'Police_Force', 'Local_Authority_(District)',
-                                   'Local_Authority_(Highway)', 'Junction_Detail', '2nd_Road_Class', '2nd_Road_Number', 
-                                   'Did_Police_Officer_Attend_Scene_of_Accident', '1st_Road_Number',
-                'Pedestrian_Crossing-Physical_Facilities', 'Date', 'Time'], axis=1, inplace=True)
-accidents["Region"] = accidents["Region"].fillna(accidents["Region"].mode()[0])
-#drop missing values (151)
-accidents.dropna(inplace=True)
-accidentsNotNorm = accidents
-
-
 # # Application
 
-# In[4]:
+# In[8]:
 
 
 import streamlit as st
 import pickle
 import pandas as pd
+import pandas as pd
+#import dataset for moddling but withour normalisation
+accidentsNotNorm = pd.read_csv(r"C:\Users\DETCAO03\V-Case study\02_Dataset\Used\Cleaned_not_normalized.csv",low_memory=False, encoding='utf-8')
 
 
-# In[5]:
+# In[9]:
 
 
 def map(arg, dicti):
@@ -86,13 +71,15 @@ def map(arg, dicti):
     return arg
 
 
-# In[6]:
+# In[10]:
 
 
 #load models
 lin_model=pickle.load(open('lin_model.pkl','rb'))
 log_model=pickle.load(open('log_model.pkl','rb'))
 dt_model=pickle.load(open('dt_model.pkl','rb'))
+nb_model=pickle.load(open('nb_model.pkl','rb'))
+#rf_model=pickle.load(open('rf_model.pkl','rb'))
 #svm=pickle.load(open('svm.pkl','rb'))
 
 def classify(num):
@@ -111,7 +98,7 @@ def main():
     </div>
     """
     st.markdown(html_temp, unsafe_allow_html=True)
-    activities=['Linear Regression','Logistic Regression','Decision Tree']
+    activities=['Linear Regression','Logistic Regression','Decision Tree', 'Naive Bayes']
     option=st.sidebar.selectbox('Which model would you like to use?',activities)
     st.subheader(option)
     
@@ -175,31 +162,6 @@ def main():
     r9=0
     r10=0
     
-    
-    
-    inputs=[[longitude, latitude, vehicles, casualties, day_of_Week, road_Class, road_Type, speed_limit, junction_Control,
-            pedestrian_Crossing_Human_Control, light_Conditions, weather_Conditions, road_Surface_Conditions,
-            special_Conditions_at_Site, carriageway_Hazards, urban_or_Rural_Area, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10]]
-    
-    
-    #normalisation of input based on prior min/max of dataset
-    longitude = (longitude-accidentsNotNorm["Longitude"].min())/(accidentsNotNorm["Longitude"].max()-accidentsNotNorm["Longitude"].min())
-    latitude = (latitude-accidentsNotNorm["Latitude"].min())/(accidentsNotNorm["Latitude"].max()-accidentsNotNorm["Latitude"].min())
-    vehicles = (vehicles-accidentsNotNorm["Number_of_Vehicles"].min())/(accidentsNotNorm["Number_of_Vehicles"].max()-accidentsNotNorm["Number_of_Vehicles"].min())
-    casualties = (casualties-accidentsNotNorm["Number_of_Casualties"].min())/(accidentsNotNorm["Number_of_Casualties"].max()-accidentsNotNorm["Number_of_Casualties"].min())
-    road_Class = (map(road_Class,dict_road_class)-accidentsNotNorm["1st_Road_Class"].min())/(accidentsNotNorm["1st_Road_Class"].max()-accidentsNotNorm["1st_Road_Class"].min())
-    road_Type = (map(road_Type,dict_road_type)-accidentsNotNorm["Road_Type"].min())/(accidentsNotNorm["Road_Type"].max()-accidentsNotNorm["Road_Type"].min())
-    speed_limit = (speed_limit-accidentsNotNorm["Speed_limit"].min())/(accidentsNotNorm["Speed_limit"].max()-accidentsNotNorm["Speed_limit"].min())
-    junction_Control = (map(junction_Control,dict_junction_control)-accidentsNotNorm["Junction_Control"].min())/(accidentsNotNorm["Junction_Control"].max()-accidentsNotNorm["Junction_Control"].min())
-    pedestrian_Crossing_Human_Control = (map(pedestrian_Crossing_Human_Control,dict_pd_human_control)-accidentsNotNorm["Pedestrian_Crossing-Human_Control"].min())/(accidentsNotNorm["Pedestrian_Crossing-Human_Control"].max()-accidentsNotNorm["Pedestrian_Crossing-Human_Control"].min())
-    light_Conditions = (map(light_Conditions,dict_light_condition)-accidentsNotNorm["Light_Conditions"].min())/(accidentsNotNorm["Light_Conditions"].max()-accidentsNotNorm["Light_Conditions"].min())
-    weather_Conditions = (map(weather_Conditions,dict_weather_condition)-accidentsNotNorm["Weather_Conditions"].min())/(accidentsNotNorm["Weather_Conditions"].max()-accidentsNotNorm["Weather_Conditions"].min())
-    road_Surface_Conditions = (map(road_Surface_Conditions,dict_road_surface)-accidentsNotNorm["Road_Surface_Conditions"].min())/(accidentsNotNorm["Road_Surface_Conditions"].max()-accidentsNotNorm["Road_Surface_Conditions"].min())
-    special_Conditions_at_Site = (map(special_Conditions_at_Site,dict_special_conditions)-accidentsNotNorm["Special_Conditions_at_Site"].min())/(accidentsNotNorm["Special_Conditions_at_Site"].max()-accidentsNotNorm["Special_Conditions_at_Site"].min())
-    carriageway_Hazards = (map(carriageway_Hazards,dict_hazards)-accidentsNotNorm["Carriageway_Hazards"].min())/(accidentsNotNorm["Carriageway_Hazards"].max()-accidentsNotNorm["Carriageway_Hazards"].min())
-    urban_or_Rural_Area = (map(urban_or_Rural_Area,dict_urban_rural)-accidentsNotNorm["Urban_or_Rural_Area"].min())/(accidentsNotNorm["Urban_or_Rural_Area"].max()-accidentsNotNorm["Urban_or_Rural_Area"].min())
-
-
     if region == 'East Midlands (England)':
         r1=0
     elif region == 'East of England':
@@ -222,6 +184,32 @@ def main():
         r9=1
     else:
         r10=1 
+
+    
+    
+    #normalisation of input based on prior min/max of dataset
+    longitude = (longitude-accidentsNotNorm["Longitude"].min())/(accidentsNotNorm["Longitude"].max()-accidentsNotNorm["Longitude"].min())
+    latitude = (latitude-accidentsNotNorm["Latitude"].min())/(accidentsNotNorm["Latitude"].max()-accidentsNotNorm["Latitude"].min())
+    vehicles = (vehicles-accidentsNotNorm["Number_of_Vehicles"].min())/(accidentsNotNorm["Number_of_Vehicles"].max()-accidentsNotNorm["Number_of_Vehicles"].min())
+    casualties = (casualties-accidentsNotNorm["Number_of_Casualties"].min())/(accidentsNotNorm["Number_of_Casualties"].max()-accidentsNotNorm["Number_of_Casualties"].min())
+    road_Class = (map(road_Class,dict_road_class)-accidentsNotNorm["1st_Road_Class"].min())/(accidentsNotNorm["1st_Road_Class"].max()-accidentsNotNorm["1st_Road_Class"].min())
+    road_Type = (map(road_Type,dict_road_type)-accidentsNotNorm["Road_Type"].min())/(accidentsNotNorm["Road_Type"].max()-accidentsNotNorm["Road_Type"].min())
+    speed_limit = (speed_limit-accidentsNotNorm["Speed_limit"].min())/(accidentsNotNorm["Speed_limit"].max()-accidentsNotNorm["Speed_limit"].min())
+    junction_Control = (map(junction_Control,dict_junction_control)-accidentsNotNorm["Junction_Control"].min())/(accidentsNotNorm["Junction_Control"].max()-accidentsNotNorm["Junction_Control"].min())
+    pedestrian_Crossing_Human_Control = (map(pedestrian_Crossing_Human_Control,dict_pd_human_control)-accidentsNotNorm["Pedestrian_Crossing-Human_Control"].min())/(accidentsNotNorm["Pedestrian_Crossing-Human_Control"].max()-accidentsNotNorm["Pedestrian_Crossing-Human_Control"].min())
+    light_Conditions = (map(light_Conditions,dict_light_condition)-accidentsNotNorm["Light_Conditions"].min())/(accidentsNotNorm["Light_Conditions"].max()-accidentsNotNorm["Light_Conditions"].min())
+    weather_Conditions = (map(weather_Conditions,dict_weather_condition)-accidentsNotNorm["Weather_Conditions"].min())/(accidentsNotNorm["Weather_Conditions"].max()-accidentsNotNorm["Weather_Conditions"].min())
+    road_Surface_Conditions = (map(road_Surface_Conditions,dict_road_surface)-accidentsNotNorm["Road_Surface_Conditions"].min())/(accidentsNotNorm["Road_Surface_Conditions"].max()-accidentsNotNorm["Road_Surface_Conditions"].min())
+    special_Conditions_at_Site = (map(special_Conditions_at_Site,dict_special_conditions)-accidentsNotNorm["Special_Conditions_at_Site"].min())/(accidentsNotNorm["Special_Conditions_at_Site"].max()-accidentsNotNorm["Special_Conditions_at_Site"].min())
+    carriageway_Hazards = (map(carriageway_Hazards,dict_hazards)-accidentsNotNorm["Carriageway_Hazards"].min())/(accidentsNotNorm["Carriageway_Hazards"].max()-accidentsNotNorm["Carriageway_Hazards"].min())
+    urban_or_Rural_Area = (map(urban_or_Rural_Area,dict_urban_rural)-accidentsNotNorm["Urban_or_Rural_Area"].min())/(accidentsNotNorm["Urban_or_Rural_Area"].max()-accidentsNotNorm["Urban_or_Rural_Area"].min())
+
+
+    
+    
+    inputs=[[longitude, latitude, vehicles, casualties, day_of_Week, road_Class, road_Type, speed_limit, junction_Control,
+            pedestrian_Crossing_Human_Control, light_Conditions, weather_Conditions, road_Surface_Conditions,
+            special_Conditions_at_Site, carriageway_Hazards, urban_or_Rural_Area, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10]]
     
     #classify button
     if st.button('Classify'):
@@ -229,8 +217,12 @@ def main():
             st.success(classify(lin_model.predict(inputs)))
         elif option=='Logistic Regression':
             st.success(classify(log_model.predict(inputs)))
+        elif option=='Decision Tree':
+            st.success(classify(dt.predict(inputs)))
+        #elif option=='Random Forest':
+         #   st.success(classify(dt.predict(inputs)))
         else:
-            st.success(classify(dt_model.predict(inputs)))
+            st.success(classify(nb_model.predict(inputs)))
 
 
 # In[ ]:
@@ -238,10 +230,4 @@ def main():
 
 if __name__=='__main__':
     main()
-
-
-# In[ ]:
-
-
-
 
