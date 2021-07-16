@@ -91,7 +91,7 @@ def classify(num):
         return 'Slight injuries'
 
 def main():
-    st.title("Case Study - Volkswagen AG")
+    st.title("Case Study - Automotive Industry")
     html_temp = """
     <div style="background-color:teal ;padding:10px">
     <h2 style="color:white;text-align:center;">Prediction of accident severity</h2>
